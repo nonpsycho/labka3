@@ -182,45 +182,79 @@ void Deserialize(Vector* uni, const char* fname)
 	fclose(inputFile);
 }
 
+int CompareByGPA(const void* a, const void* b)
+{
+	const Student* studentA = (const Student*)a;
+	const Student* studentB = (const Student*)b;
+	int sumA = 0; 
+	int sumB = 0;
+	size_t numMarksA = studentA->marks.count;
+	size_t numMarksB = studentB->marks.count;
+
+	for (int i = 0; i < studentA->marks.count; i++)
+	{
+		Discipline* discipline = (Discipline*)AtVec(&studentA->marks, i);
+		sumA += discipline->mark;
+	}
+	for (int i = 0; i < studentB->marks.count; i++)
+	{
+		Discipline* discipline = (Discipline*)AtVec(&studentB->marks, i);
+		sumB += discipline->mark;
+	}
+	double gpaA = (double)sumA / numMarksA;
+	double gpaB = (double)sumB / numMarksB;
+	if (gpaA < gpaB)
+	{
+		return 1;
+	}
+	else if (gpaA > gpaB)
+	{
+		return -1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 void PrintGeeks(Vector* uni)
 {
-
+	qsort(uni->data, uni->count, sizeof(Student), CompareByGPA);
 }
 
 void KickLazy(Vector* uni, int count)
 {
-	int IdxLazy = 0;
+	int maxEvents = 0;
 	for (int i = 0; i < uni->count - 1; i++)
 	{
-		Student* student1 = (Student*)AtVec(uni, i);
-		for (int j = i; j < uni->count; j++)
+		Student* student = (Student*)AtVec(uni, i);
+		if (student->events.count > maxEvents)
 		{
-			Student* student2 = (Student*)AtVec(uni, j);
-			int events1 = student1->events.count;
-			int events2 = student2->events.count;
-			int maxEvents = 0;
-			if (events1 < events2)
-			{
-				IdxLazy = j;
-			}
-			else
-			{
-				IdxLazy = i;
-			}
+			maxEvents = student->events.count;
 		}
-		
-
+	}
+	for (int i = uni->count - 1; i >= 0; i--)
+	{
+		Student* student = (Student*)AtVec(uni, i);
+		if (student->events.count == maxEvents)
+		{
+			DestructVec(&student->marks);
+			DestructVec(&student->events);
+			RemoveVec(uni, i);
+		}
 	}
 }
 
 void SecondTask(char* file)
 {
 	Vector uni = ConstructVec(sizeof(Student));
-	do {
+	
 
-	} while ();
-
-
-
+	for (int i = 0; i < uni.count; i++)
+	{
+		Student* student = (Student*)AtVec(&uni, i);
+		DestructVec(&student->marks);
+		DestructVec(&student->events);
+	}
 	DestructVec(&uni);
 }
