@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include "task1.h"
 
 int main(int argc, char* argv[])
 {
-	char* file;
+	char* file = "pupa.bin";
 	int choice;
 	do
 	{
@@ -23,7 +24,7 @@ int main(int argc, char* argv[])
 		case 1:
 		{
 			printf("You choose a task 1\n");
-			
+			FirstTask(file);
 			break;
 		}
 		case 2:

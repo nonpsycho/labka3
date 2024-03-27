@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "task1.h"
-#include "ioput.h"
 
 typedef union 
 {
@@ -14,7 +13,24 @@ typedef union
     } parts;
 } FloatParts;
 
-int FindIntegerPart(char* file)
+static void FileFill(char* file)
+{
+    FILE* inputFile = NULL;
+    inputFile = fopen(file, "wb+");
+    if (inputFile == NULL)
+    {
+        printf("\n\tFile openning error\n");
+        exit(-1);
+    }
+    float number;
+    printf("Enter a floating point number: \n");
+    scanf_s("%f", &number);
+    fwrite(&number, sizeof(float), 1, inputFile);
+
+    fclose(inputFile);
+}
+
+static int FindIntegerPart(char* file)
 {
     FILE* inputFile = fopen(file, "rb");
     if (inputFile == NULL)
@@ -24,10 +40,10 @@ int FindIntegerPart(char* file)
     }
 
     FloatParts floatparts;
-    unsigned int integerPart = 0;
+    int integerPart = 0;
     while (fread(&floatparts.floating, sizeof(float), 1, inputFile) == 1)
     {
-        unsigned int integerPart = floatparts.parts.mantissa >> (23 - floatparts.parts.exponent);
+        int integerPart = floatparts.parts.mantissa >> (23 - floatparts.parts.exponent);
 
         if (floatparts.parts.sign == 1)
         {
