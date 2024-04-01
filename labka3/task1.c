@@ -1,62 +1,47 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "task1.h"
 
 typedef union 
 {
-    float floating;
-    struct 
-    {
-        unsigned int mantissa : 23;
-        unsigned int exponent : 8;
-        unsigned int sign : 1;
-    } parts;
-} FloatParts;
+	float floating;
+	struct 
+	{
+		unsigned int mantissa : 23;
+		unsigned int exponent : 8;
+		unsigned int sign : 1;
+	}parts;
+}FloatParts;
 
-static void FileFill(char* file)
+static int FindIntegerPart(float number)
 {
-    FILE* inputFile = NULL;
-    inputFile = fopen(file, "wb+");
-    if (inputFile == NULL)
-    {
-        printf("\n\tFile openning error\n");
-        exit(-1);
-    }
-    float number;
-    printf("Enter a floating point number: \n");
-    scanf_s("%f", &number);
-    fwrite(&number, sizeof(float), 1, inputFile);
+	FloatParts numParts;
+	numParts.floating = number;
+	unsigned int mantissaMask = (1 << 23) - 1;
+	unsigned int mantissaPart = numParts.parts.mantissa & mantissaMask;
 
-    fclose(inputFile);
+	int exponentBias = 127;
+	int exponent = numParts.parts.exponent - exponentBias;
+
+	int integerPart = 0;
+
+	if (exponent >= 0) 
+	{
+		integerPart = (1 << exponent) | (mantissaPart >> (23 - exponent));
+	}
+	if (numParts.parts.sign == 1)
+	{
+		integerPart *= -1;
+	}
+
+	return integerPart;
 }
 
-static int FindIntegerPart(char* file)
+void FirstTask()
 {
-    FILE* inputFile = fopen(file, "rb");
-    if (inputFile == NULL)
-    {
-        printf("\n\tFile openning error\n");
-        exit(-1);
-    }
-
-    FloatParts floatparts;
-    int integerPart = 0;
-    while (fread(&floatparts.floating, sizeof(float), 1, inputFile) == 1)
-    {
-        int integerPart = floatparts.parts.mantissa >> (23 - floatparts.parts.exponent);
-
-        if (floatparts.parts.sign == 1)
-        {
-            integerPart = -integerPart; 
-        }
-    }
-    fclose(inputFile);
-    return integerPart; 
-}
-
-void FirstTask(char* file)
-{
-    FileFill(file);
-    int integerPart = FindIntegerPart(file);
-    printf("Integer part: %d\n", integerPart);
+	float number;
+	printf("Enter a floating point number: \n");
+	scanf_s("%f", &number);
+	int integerPart = FindIntegerPart(number);
+	printf("Integer part of number: %d\n", integerPart);
+	return 0;
 }

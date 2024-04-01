@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "task1.h"
+#include "task2.h"
 
 int main(int argc, char* argv[])
 {
-	char* file = "pupa.bin";
 	int choice;
 	do
 	{
@@ -24,13 +24,13 @@ int main(int argc, char* argv[])
 		case 1:
 		{
 			printf("You choose a task 1\n");
-			FirstTask(file);
+			FirstTask();
 			break;
 		}
 		case 2:
 		{
 			printf("You choose a task 2\n");
-
+			SecondTask();
 			break;
 		}
 		default:
