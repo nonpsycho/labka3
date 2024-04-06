@@ -3,20 +3,6 @@
 #include <stdlib.h>
 #include "task2.h"
 
-static EventType StringToEvenType(int numb)
-{
-	switch (numb)
-	{
-	case 1:
-		return ENROLLMENT;
-	case 2:
-		return EXPULSION;
-	case 3:
-		return RECOVERY;
-	default:
-		return ERRORTYPE;
-	}
-}
 const char* EventTypeToString(EventType type)
 {
 	switch (type)
@@ -33,6 +19,18 @@ const char* EventTypeToString(EventType type)
 		return "Unknown";
 	}
 }
+static EventType StringToEvenType(char* str)
+{
+	const char* eventNames[] = { "Enrollment", "Expulsion", "Recovery" };
+	for (int i = 0; i < 3; i++)
+	{
+		if (strcmp(str, eventNames[i]) == 0)
+		{
+			return (EventType)i;
+		}
+	}
+	return ERRORTYPE;
+}
 static void ReplaceSpaces(char* str)
 {
 	size_t len = strlen(str);
@@ -44,18 +42,7 @@ static void ReplaceSpaces(char* str)
 		}
 	}
 }
-//static EventType StringToEvenType(char* str)
-//{
-//	const char* eventNames[] = { "ENROLLMENT", "EXPULSION", "RECOVERY" };
-//	for (int i = 0; i < 3; i++)
-//	{
-//		if (strcmp(str, eventNames[i]) == 0)
-//		{
-//			return (EventType) i;
-//		}
-//	}
-//	return ERRORTYPE;
-//}
+
 static void PrintStudent(Student* st)
 {
 	printf("%d,%s,", st->id, st->name);
@@ -125,11 +112,10 @@ static Student ReadStudent()
 	for (int i = 0; i < numEvent; i++)
 	{
 		Event event;
-		int type;
-		printf("Enter event type: 1- Enrollment; 2 - Expulsion; 3 - Recovery\n");
-		scanf("%d",&type);
+		printf("Enter event type: Enrollment, Expulsion, Recovery\n");
+		scanf("%s", buffer);
 
-		event.type = StringToEvenType(type);
+		event.type = StringToEvenType(buffer);
 
 		printf("Enter the date of the event (yyyy.mm.dd): \n");
 		int c;
@@ -138,11 +124,10 @@ static Student ReadStudent()
 
 		PushBackVec(&student.events, &event);
 	}
-
 	return student;
 }
 
-static void Serialize(Vector* uni /*const char* fname*/)
+static void Serialize(Vector* uni)
 {
 	FILE* inputFile = fopen("info.txt", "w");
 	if (inputFile == NULL)
@@ -182,6 +167,45 @@ static void Serialize(Vector* uni /*const char* fname*/)
 	fclose(inputFile);
 }
 
+static void parseEvents(char* token, Student* student)
+{
+	char* eventToken = strtok(token, ";");
+	while (eventToken != NULL) 
+	{
+		char* dateToken = strchr(eventToken, ':');
+		if (dateToken != NULL) 
+		{
+			*dateToken = '\0';
+			dateToken++;
+			Event event = { .type = StringToEvenType(eventToken), .date = "" };
+			strncpy(event.date, dateToken, DATE_LENGTH);
+			PushBackVec(&student->events, &event);
+		}
+		eventToken = strtok(NULL, ";,");
+	}
+}
+
+static void parseDisciplines(char* token, Student* student) 
+{
+	char* disciplineToken = strtok(token, ";,");
+	while (disciplineToken != NULL)
+	{
+		char* markToken = strchr(disciplineToken, ':');
+		if (markToken != NULL)
+		{
+			*markToken = '\0';
+			markToken++;
+			int mark = atoi(markToken);
+			Discipline discipline = { .mark = mark, .name = _strdup(disciplineToken) };
+			
+			PushBackVec(&student->marks, &discipline);
+			
+		}
+		disciplineToken = strtok(NULL, ";,");
+	}
+}
+
+
 static void Deserialize(Vector* uni)
 {
 	FILE* inputFile = fopen("test.txt", "r");
@@ -190,74 +214,41 @@ static void Deserialize(Vector* uni)
 		printf("File openning error\n");
 		exit(-1);
 	}
+	Student student = { .id = 0, .name = NULL, .marks = ConstructVec(sizeof(Discipline)), .events = ConstructVec(sizeof(Event)) };
 	char buffer[256];
-	while (fgets(buffer, sizeof(buffer), inputFile) != NULL)
+	while (fgets(buffer, 256, inputFile) != NULL)
 	{
-		Student student;
-
-		memset(&student, 0, sizeof(Student));
-		sscanf(buffer, "%d,", &student.id);
-
-		char name[256];
 		char* token = strtok(buffer, ",");
-		int counter = 0;
+
 		while (token != NULL)
 		{
-			if (counter == 1)
-			{
-				strcpy(name, token);
-			}
-			else if (counter == 2)
-			{
-				strcat(name, ",");
-				strcat(name, token);
-			}
-			else if (counter == 3)
-			{
-				strcat(name, ",");
-				strcat(name, token);
-			}
-			counter++;
+			student.id = atoi(token);
+
 			token = strtok(NULL, ",");
-		}
-		student.name = malloc(strlen(name) + 1);
-
-		char* marksStart = strchr(buffer, ',') + 1;
-		char* marksEnd = strchr(marksStart, ',');
-
-		if (marksEnd != marksStart)
-		{
-			*marksEnd = '\0';
-			char* markMarker = strtok(marksStart, ";");
-
-			while (markMarker != NULL)
+			char name[256];
+			strcpy(name, "");
+			while (strchr(token, ':') == NULL)
 			{
-				Discipline discipline;
-				sscanf(markMarker, "%[^:]:%d", discipline.name, &discipline.mark);
-				PushBackVec(&student.marks, &discipline);
-				markMarker = strtok(NULL, ";");
+				strcat(name, token);
+				strcat(name, ",");
+				token = strtok(NULL, ",");
 			}
+			size_t length = strlen(name);
+			name[length - 1] = '\0';
+			student.name = malloc(strlen(name) + 1);
+			strcpy(student.name, name);
+
+			parseDisciplines(token, &student);
+
+			token = strtok(NULL, ",");
+			parseEvents(token, &student);
+
+			PushBackVec(uni, &student);
 		}
-		char* eventsStart = marksEnd + 1;
-		if (eventsStart[0] != '\n')
-		{
-			char* eventsEnd = strchr(eventsStart, '\n');
-			*eventsEnd = '\0';
-			char* eventMarker = strtok(eventsStart, ";");
-			while (eventMarker != NULL)
-			{
-				Event event;
-				int type;
-				sscanf(eventMarker, "%d:%s", &type, event.date);
-				event.type = StringToEvenType(type);
-				PushBackVec(&student.events, &event);
-				eventMarker = strtok(NULL, ";");
-			}
-		}
-		PushBackVec(uni, &student);
 	}
 	fclose(inputFile);
 }
+
 static void DestructStudent(Student* st)
 {
 	free(st->name); 
@@ -340,14 +331,13 @@ static void KickLazy(Vector* uni)
 
 void SecondTask()
 {
-	//const char* file = "info.txt";
 	Vector uni = ConstructVec(sizeof(Student));
 	int fill;
 	printf("Choose a way to fill: 0 - user input; 1 - test data\n");
 	scanf_s("%d", &fill);
 	if (fill)
 	{
-		Deserialize(&uni /*"test.txt"*/);
+		Deserialize(&uni);
 	}
 	else
 	{
@@ -360,9 +350,11 @@ void SecondTask()
 		{
 			Student student = ReadStudent(); 
 			PushBackVec(&uni, &student); 
+			printf("Add another student?\n1 - yes; 0 - no\n"); 
+			scanf("%d", &stFill); 
 		}
 
-		Serialize(&uni /*"info.txt"*/);
+		Serialize(&uni);
 	}
 	int choice;
 	do 
@@ -401,21 +393,21 @@ void SecondTask()
 			Student* student = (Student*)AtVec(&uni, idx - 1);
 			RemoveVec(&uni, idx);
 			DestructStudent(student);
-			Serialize(&uni /*"info.txt"*/);
+			Serialize(&uni);
 			break;
 		}
 		case 3:
 		{
 			printf("You choose a task 3\n");
 			PrintGeeks(&uni);
-			Serialize(&uni /*"info.txt"*/);
+			Serialize(&uni);
 			break;
 		}
 		case 4:
 		{
 			printf("You choose a task 4\n");
 			KickLazy(&uni);
-			Serialize(&uni /*"info.txt"*/);
+			Serialize(&uni);
 			break;
 		}
 		default:
