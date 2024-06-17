@@ -94,6 +94,8 @@ void HTRemove(HashTable* ht, int key)
 			prev->next = record->next;
 		}
 		free(record);
+		int keyIdx = FindIdxVec(&ht->keys, &key, CompareKeys);
+		RemoveVec(&ht->keys, keyIdx);
 	}
 }
 

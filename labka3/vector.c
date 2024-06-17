@@ -23,14 +23,24 @@ void* AtVec(Vector* v, int idx)
 	return (char*)v->data + idx * v->type;
 }
 
-void* FindVec(Vector* v, void* ref, int(*cmp)(void*, void*))
+void* FindIdxVec(Vector* v, void* ref, int(*cmp)(void*, void*))
 {
 	for (int i = 0; i < v->count; i++)
 	{
 		if (cmp(ref, AtVec(v, i)) == 0)
 		{
-			return AtVec(v, i);
+			return i;
 		}
+	}
+	return -1;
+}
+
+void* FindVec(Vector* v, void* ref, int(*cmp)(void*, void*))
+{
+	int idx = FindIdxVec(v, ref, cmp);
+	if (idx >= 0)
+	{
+		return AtVec(v, idx);
 	}
 	return NULL;
 }
