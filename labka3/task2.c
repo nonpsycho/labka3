@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "hashtable.h"
 #include "task2.h"
 #include "filling.h"
 
@@ -130,7 +131,7 @@ static void KickLazy(Vector* uni)
 
 void SecondTask()
 {
-	Vector uni = ConstructVec(sizeof(Student));
+	HashTable uni = HTCreate(sizeof(Student));
 	int fill;
 	printf("Choose a way to fill: 0 - user input; 1 - test data\n");
 	scanf_s("%d", &fill);
@@ -141,14 +142,14 @@ void SecondTask()
 	else
 	{
 		Student student = ReadStudent();
-		PushBackVec(&uni, &student);
+		HTInsert(&uni, student.id, &student);
 		int stFill;
 		printf("Add another student?\n1 - yes; 0 - no\n"); 
 		scanf("%d", &stFill);
 		while(stFill != 0)
 		{
 			Student student = ReadStudent(); 
-			PushBackVec(&uni, &student); 
+			HTInsert(&uni, student.id, &student);
 			printf("Add another student?\n1 - yes; 0 - no\n"); 
 			scanf("%d", &stFill); 
 		}
@@ -186,13 +187,12 @@ void SecondTask()
 		}
 		case 2:
 		{
-			int idx;
-			printf("Enter the index of the student you want to delete\n");
-			scanf_s("%d", &idx);
-			Student* student = (Student*)AtVec(&uni, idx - 1);
-			RemoveVec(&uni, idx);
+			int id;
+			printf("Enter the ID of the student you want to delete\n");
+			scanf_s("%d", &id);
+			Student* student = (Student*)HTFind(&uni, id);
 			DestructStudent(student);
-			
+			HTRemove(&uni, id);
 			break;
 		}
 		case 3:
