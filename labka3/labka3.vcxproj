@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="filling.c" />
     <ClCompile Include="vector.c" />
     <ClCompile Include="main.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsC</CompileAs>
@@ -136,6 +137,7 @@
     <ClCompile Include="task2.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="filling.h" />
     <ClInclude Include="vector.h" />
     <ClInclude Include="task1.h" />
     <ClInclude Include="task2.h" />

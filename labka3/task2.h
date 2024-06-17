@@ -1,7 +1,7 @@
 #ifndef __TASK2_H__
 #define __TASK2_H__
 
-#define DATE_LENGTH 11 //yyyy.mm.dd\0
+#define DATE_LENGTH 11 //dd.mm.yyyy\0
 #include "vector.h"
 
 typedef enum
@@ -34,5 +34,3 @@ typedef struct
 
 void SecondTask();
 #endif
-
-
