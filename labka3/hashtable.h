@@ -6,7 +6,8 @@
 typedef struct HashRecord
 {
 	struct HashRecord* next;
-	int key;
+	void* key;
+	int keySize;
 	void* value;
 }HashRecord;
 
@@ -17,13 +18,15 @@ typedef struct
 	int size;
 	int itemSize;
 	void (*itemDtor)(void*);
+	int (*KeyCompareFunc)(void*, void*);
 }HashTable;
 
-HashTable HTCreate(int itemSize, void (*itemDtor)(void*));
-void HTInsert(HashTable* ht, int key, void* value);
-void HTRemove(HashTable* ht, int key);
+int CompareKeys(void* lhs, void* rhs);
+HashTable HTCreate(int itemSize, void (*itemDtor)(void*), int (*KeyCompareFunc)(void*, void*));
+void HTInsert(HashTable* ht, void* key, void* value);
+void HTRemove(HashTable* ht, void* key);
 void HTDestroy(HashTable* ht);
-void* HTFind(HashTable* ht, int key);
+void* HTFind(HashTable* ht, void* key);
 
 
 #endif

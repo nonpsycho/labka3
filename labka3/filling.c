@@ -144,7 +144,7 @@ Student ReadStudent()
 	return student;
 }
 
-void Serialize(Vector* uni)
+void Serialize(HashTable* uni)
 {
 	FILE* inputFile = fopen("info.txt", "w");
 	if (inputFile == NULL)
@@ -152,9 +152,10 @@ void Serialize(Vector* uni)
 		printf("File openning error\n");
 		exit(-1);
 	}
-	for (int i = 0; i < uni->count; i++)
+	for (int i = 0; i < uni->keys.count; i++)
 	{
-		Student* student = (Student*)AtVec(uni, i);
+		int key = (int)AtVec(&uni->keys, i);
+		Student* student = (Student*)HTFind(uni, key);
 		fprintf(inputFile, "%d,", student->id);
 		fprintf(inputFile, "%s,", student->name);
 		size_t numMarks = student->marks.count;

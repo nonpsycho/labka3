@@ -41,27 +41,27 @@ static void DestructStudent(Student* st)
 	DestructVec(&st->marks);
 	DestructVec(&st->events);
 }
+
+float FindGPA(Student* student)
+{
+	int sum= 0;
+	size_t numMarks = student->marks.count;
+	for (int i = 0; i < student->marks.count; i++)
+	{
+		Discipline* discipline = (Discipline*)AtVec(&student->marks, i);
+		sum += discipline->mark;
+	}
+	float gpa = (float) sum / numMarks;
+	return gpa;
+}
+
 static int CompareByGPA(const void* a, const void* b)
 {
 	Student* studentA = (Student*)a;
 	Student* studentB = (Student*)b;
-	int sumA = 0; 
-	int sumB = 0;
-	size_t numMarksA = studentA->marks.count;
-	size_t numMarksB = studentB->marks.count;
+	float gpaA = FindGPA(studentA);
+	float gpaB = FindGPA(studentB);
 
-	for (int i = 0; i < studentA->marks.count; i++)
-	{
-		Discipline* discipline = (Discipline*)AtVec(&studentA->marks, i);
-		sumA += discipline->mark;
-	}
-	for (int i = 0; i < studentB->marks.count; i++)
-	{
-		Discipline* discipline = (Discipline*)AtVec(&studentB->marks, i);
-		sumB += discipline->mark;
-	}
-	double gpaA = (double)sumA / numMarksA;
-	double gpaB = (double)sumB / numMarksB;
 	if (gpaA < gpaB)
 	{
 		return 1;
@@ -76,12 +76,13 @@ static int CompareByGPA(const void* a, const void* b)
 	}
 }
 
-static void PrintGeeks(Vector* uni)
+static void PrintGeeks(HashTable* uni)
 {
 	Vector copyUni = ConstructVec(sizeof(Student));
-	for (int i = 0; i < uni->count; i++)
+	for (int i = 0; i < uni->keys.count; i++)
 	{
-		Student* student = (Student*)AtVec(uni, i);
+		float key = *(float*)AtVec(&uni->keys, i);
+		Student* student = (Student*)HTFind(uni, &key);
 		for (int i = 0; i < student->events.count; i++)
 		{
 			Event* event = (Event*)AtVec(&student->events, i);
@@ -106,32 +107,45 @@ static void PrintGeeks(Vector* uni)
 	DestructVec(&copyUni);
 }
 
-static void KickLazy(Vector* uni)
+static void KickLazy(HashTable* uni)
 {
 	int maxEvents = 0;
 
-	for (int i = 0; i < uni->count; i++)
+	for (int i = 0; i < uni->keys.count; i++)
 	{
-		Student* student = (Student*)AtVec(uni, i);
+		float key = *(float*)AtVec(&uni->keys, i);
+		Student* student = (Student*)HTFind(uni, &key);
 		if (student->events.count > maxEvents)
 		{
 			maxEvents = student->events.count;
 		}
 	}
-	for (int i = uni->count - 1; i >= 0; i--)
+	for (int i = uni->keys.count - 1; i >= 0; i--)
 	{
-		Student* student = (Student*)AtVec(uni, i);
+		float key = *(float*)AtVec(&uni->keys, i);
+		Student* student = (Student*)HTFind(uni, &key);
 		if (student->events.count == maxEvents)
 		{
-			DestructStudent(student); 
-			RemoveVec(uni, i); 
+			///////////
+			/*DestructStudent(student); 
+			RemoveVec(uni, i); */
+			HTRemove(uni, &key);
 		}
 	}
 }
 
+void FindStudentByGPA(HashTable* uni)
+{
+	int gpa = 0;
+	printf("Enter the student's GPA: \n");
+	scanf("%f", &gpa);
+	Student* student = (Student*)HTFind(&uni, &gpa);
+	PrintStudent(student);
+}
+
 void SecondTask()
 {
-	HashTable uni = HTCreate(sizeof(Student));
+	HashTable uni = HTCreate(sizeof(Student), HTDestroy, CompareKeys);
 	int fill;
 	printf("Choose a way to fill: 0 - user input; 1 - test data\n");
 	scanf_s("%d", &fill);
@@ -142,14 +156,15 @@ void SecondTask()
 	else
 	{
 		Student student = ReadStudent();
-		HTInsert(&uni, student.id, &student);
+		float gpa = FindGPA(&student);
+		HTInsert(&uni, &gpa, &student);
 		int stFill;
 		printf("Add another student?\n1 - yes; 0 - no\n"); 
 		scanf("%d", &stFill);
 		while(stFill != 0)
 		{
 			Student student = ReadStudent(); 
-			HTInsert(&uni, student.id, &student);
+			HTInsert(&uni, &gpa, &student);
 			printf("Add another student?\n1 - yes; 0 - no\n"); 
 			scanf("%d", &stFill); 
 		}
@@ -161,9 +176,9 @@ void SecondTask()
 	{
 		printf("\n\tMenu:\n");
 		printf("1 - Print a list of students\n");
-		printf("2 - Delete a student by ID\n");
-		printf("3 - Print the most successful students\n");
-		printf("4 - Delete a student with replete learning history\n");
+		printf("2 - Print the most successful students\n");
+		printf("3 - Delete a student with replete learning history\n");
+		printf("4 - \n");
 		printf("0 - Finish the program\n");
 		printf("Choose a task: \n");
 		scanf_s("%d", &choice);
@@ -178,34 +193,29 @@ void SecondTask()
 		case 1:
 		{
 			printf("List of student\n");
-			for (int i = 0; i < uni.count; i++)
+			for (int i = 0; i < uni.keys.count; i++)
 			{
-				Student* student = (Student*)AtVec(&uni, i); 
+				float key = *(float*)AtVec(&uni.keys, i);
+				Student* student = (Student*)HTFind(&uni, &key);
 				PrintStudent(student);
 			}
 			break;
 		}
 		case 2:
 		{
-			int id;
-			printf("Enter the ID of the student you want to delete\n");
-			scanf_s("%d", &id);
-			Student* student = (Student*)HTFind(&uni, id);
-			DestructStudent(student);
-			HTRemove(&uni, id);
-			break;
-		}
-		case 3:
-		{
 			printf("You choose a task 3\n");
 			PrintGeeks(&uni);
 			break;
 		}
-		case 4:
+		case 3:
 		{
 			printf("You choose a task 4\n");
 			KickLazy(&uni);
 			break;
+		}
+		case 4:
+		{
+			
 		}
 		default:
 		{
@@ -216,10 +226,6 @@ void SecondTask()
 
 	} while (choice != 0);
 	Serialize(&uni);
-	for (int i = 0; i < uni.count; i++)
-	{
-		Student* student = (Student*)AtVec(&uni, i);
-		DestructStudent(student);
-	}
-	DestructVec(&uni);
+	////destVec
+	HTDestroy(&uni);
 }

@@ -2,6 +2,8 @@
 #define __FILLING_H__
 
 #include "task2.h"
+#include "hashtable.h"
+#include "vector.h"
 
 #define INVALID_DATE "00.00.0000"
 

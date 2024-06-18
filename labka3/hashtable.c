@@ -1,24 +1,24 @@
 #include "hashtable.h"
 #include <stdlib.h>
 #include <string.h>
-
+#define HASH_MULTIPLIER 31
 #define HASH_TABLE_SIZE 256
 
-static int Hash(int key)
+static unsigned int Hash(void* key)
 {
-	return key % HASH_TABLE_SIZE;
+	return ((unsigned int)key * HASH_MULTIPLIER) % HASH_TABLE_SIZE;
 }
 
-static int CompareKeys(void* lhs, void* rhs)
+int CompareKeys(void* lhs, void* rhs)
 {
-	int lKey = *(int*)(lhs);
-	int rKey = *(int*)(rhs);
+	float lKey = *(float*)(lhs);
+	float rKey = *(float*)(rhs);
 	return lKey - rKey;
 }
 
-static HashRecord* GetRecord(HashTable* ht, int key)
+static HashRecord* GetRecord(HashTable* ht, void* key)
 {
-	if (FindVec(&ht->keys, &key, CompareKeys))
+	if (FindVec(&ht->keys, &key, ht->KeyCompareFunc))
 	{
 		HashRecord* record = &ht->data[Hash(key)];
 		while (record)
@@ -33,20 +33,25 @@ static HashRecord* GetRecord(HashTable* ht, int key)
 	return NULL;
 }
 
-HashTable HTCreate(int itemSize, void (*itemDtor)(void*))
+HashTable HTCreate(int itemSize, void (*itemDtor)(void*), int (*KeyCompareFunc)(void*, void*))
 {
 	HashTable ht = {
-		.keys = ConstructVec(sizeof(int)),
+		.keys = ConstructVec(sizeof(float)),
 		.data = calloc(sizeof(HashRecord*), HASH_TABLE_SIZE),
 		.itemSize = itemSize,
 		.size = HASH_TABLE_SIZE,
-		.itemDtor = itemDtor
+		.itemDtor = itemDtor,
+		.KeyCompareFunc = KeyCompareFunc
 	};
 	return ht;
 }
 
-void HTInsert(HashTable* ht, int key, void* value)
+void HTInsert(HashTable* ht, void* key, void* value)
 {
+	if (FindVec(&ht->keys, &key, ht->KeyCompareFunc) != NULL)
+	{
+		HTRemove(ht, key);
+	}
 	PushBackVec(&ht->keys, key);
 
 	HashRecord* newRecord = calloc(sizeof(HashRecord), 1);
@@ -68,7 +73,7 @@ void HTInsert(HashTable* ht, int key, void* value)
 	}
 }
 
-void HTRemove(HashTable* ht, int key)
+void HTRemove(HashTable* ht, void* key)
 {
 	HashRecord* record = GetRecord(ht, key);
 	if (record)
@@ -94,7 +99,7 @@ void HTRemove(HashTable* ht, int key)
 			prev->next = record->next;
 		}
 		free(record);
-		int keyIdx = FindIdxVec(&ht->keys, &key, CompareKeys);
+		int keyIdx = FindIdxVec(&ht->keys, &key, ht->KeyCompareFunc);
 		RemoveVec(&ht->keys, keyIdx);
 	}
 }
@@ -103,14 +108,14 @@ void HTDestroy(HashTable* ht)
 {
 	for (int i = 0; i < ht->keys.count; i++)
 	{
-		int key = *(int*)AtVec(&ht->keys, i);
+		void* key = (void*)AtVec(&ht->keys, i);
 		HTRemove(ht, key);
 	}
 	free(ht->data);
 	DestructVec(&ht->keys);
 }
 
-void* HTFind(HashTable* ht, int key)
+void* HTFind(HashTable* ht, void* key)
 {
 	HashRecord *record = GetRecord(ht, key);
 	if (record)
