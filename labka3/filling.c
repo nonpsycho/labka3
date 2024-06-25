@@ -75,6 +75,19 @@ EventType StringToEvenType(char* str)
 	return ERRORTYPE;
 }
 
+float FindGPA(Student* student)
+{
+	int sum = 0;
+	size_t numMarks = student->marks.count;
+	for (int i = 0; i < student->marks.count; i++)
+	{
+		Discipline* discipline = (Discipline*)AtVec(&student->marks, i);
+		sum += discipline->mark;
+	}
+	float gpa = (float)sum / numMarks;
+	return gpa;
+}
+
 Student ReadStudent()
 {
 	Student student = { .marks = ConstructVec(sizeof(Discipline)), .events = ConstructVec(sizeof(Event)) };
@@ -154,8 +167,8 @@ void Serialize(HashTable* uni)
 	}
 	for (int i = 0; i < uni->keys.count; i++)
 	{
-		int key = (int)AtVec(&uni->keys, i);
-		Student* student = (Student*)HTFind(uni, key);
+		float key = *(float*)AtVec(&uni->keys, i);
+		Student* student = (Student*)HTFind(uni, &key);
 		fprintf(inputFile, "%d,", student->id);
 		fprintf(inputFile, "%s,", student->name);
 		size_t numMarks = student->marks.count;
@@ -264,7 +277,7 @@ Student ReadFromFile(char* str)
 	DestructVec(&tokens);
 	return student;
 }
-void Deserialize(Vector* uni)
+void Deserialize(HashTable* uni)
 {
 	FILE* file = fopen("test.txt", "r");
 	if (file == NULL)
@@ -276,7 +289,8 @@ void Deserialize(Vector* uni)
 	while (fgets(buffer, 256, file) != NULL)
 	{
 		Student student = ReadFromFile(buffer);
-		PushBackVec(uni, &student);
+		float gpa = FindGPA(&student);
+		HTInsert(uni, &gpa, &student);
 	}
 	fclose(file);
 }

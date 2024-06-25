@@ -42,19 +42,6 @@ static void DestructStudent(Student* st)
 	DestructVec(&st->events);
 }
 
-float FindGPA(Student* student)
-{
-	int sum= 0;
-	size_t numMarks = student->marks.count;
-	for (int i = 0; i < student->marks.count; i++)
-	{
-		Discipline* discipline = (Discipline*)AtVec(&student->marks, i);
-		sum += discipline->mark;
-	}
-	float gpa = (float) sum / numMarks;
-	return gpa;
-}
-
 static int CompareByGPA(const void* a, const void* b)
 {
 	Student* studentA = (Student*)a;
@@ -136,10 +123,10 @@ static void KickLazy(HashTable* uni)
 
 void FindStudentByGPA(HashTable* uni)
 {
-	int gpa = 0;
+	float gpa = 0;
 	printf("Enter the student's GPA: \n");
 	scanf("%f", &gpa);
-	Student* student = (Student*)HTFind(&uni, &gpa);
+	Student* student = (Student*)HTFind(uni, &gpa);
 	PrintStudent(student);
 }
 
@@ -164,6 +151,7 @@ void SecondTask()
 		while(stFill != 0)
 		{
 			Student student = ReadStudent(); 
+			float gpa = FindGPA(&student);
 			HTInsert(&uni, &gpa, &student);
 			printf("Add another student?\n1 - yes; 0 - no\n"); 
 			scanf("%d", &stFill); 
@@ -178,7 +166,7 @@ void SecondTask()
 		printf("1 - Print a list of students\n");
 		printf("2 - Print the most successful students\n");
 		printf("3 - Delete a student with replete learning history\n");
-		printf("4 - \n");
+		printf("4 - Search for a student by gpa\n");
 		printf("0 - Finish the program\n");
 		printf("Choose a task: \n");
 		scanf_s("%d", &choice);
@@ -203,19 +191,20 @@ void SecondTask()
 		}
 		case 2:
 		{
-			printf("You choose a task 3\n");
+			printf("You choose a task 2\n");
 			PrintGeeks(&uni);
 			break;
 		}
 		case 3:
 		{
-			printf("You choose a task 4\n");
+			printf("You choose a task 3\n");
 			KickLazy(&uni);
 			break;
 		}
 		case 4:
 		{
-			
+			printf("You choose a task 4\n");
+			FindStudentByGPA(&uni);
 		}
 		default:
 		{
@@ -227,5 +216,11 @@ void SecondTask()
 	} while (choice != 0);
 	Serialize(&uni);
 	////destVec
+	for (int i = 0; i < uni.keys.count; i++)
+	{
+		float key = *(float*)AtVec(&uni.keys, i);
+		Student* student = (Student*)HTFind(&uni, &key);
+		DestructStudent(student);
+	}
 	HTDestroy(&uni);
 }

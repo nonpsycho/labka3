@@ -9,13 +9,14 @@
 
 const char* EventTypeToString(EventType type); 
 EventType StringToEvenType(char* str);
+float FindGPA(Student* student);
 Student ReadStudent();
-void Serialize(Vector* uni);
+void Serialize(HashTable* uni);
 Vector GetTokens(char* str);
 typedef  void (*ReadProc)(const char* token, Student* st);
 void ReadEvents(const char* token, Student* st);
 Student ReadFromFile(char* str);
-void Deserialize(Vector* uni);
+void Deserialize(HashTable* uni);
 
 #endif
 
